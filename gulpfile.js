@@ -5,6 +5,11 @@ var gulp = require('gulp');
 var jade = require('gulp-jade');
 var sass = require('gulp-sass');
 
+
+//压缩
+var minifycss = require('gulp-minify-css');
+var rename = require('gulp-rename');
+
 //终端输出标记
 var chalk = require('chalk');
 
@@ -23,7 +28,11 @@ gulp.task('compile', function() {
 	})).pipe(gulp.dest('./dest'))
 
 	gulp.src('./src/css/*.scss',{base : 'src'})
-	.pipe(sass()).pipe(gulp.dest('./dest'))
+	.pipe(sass())
+	.pipe(minifycss())
+	.pipe(rename({ suffix: '.min' }))
+	.pipe(gulp.dest('./dest'))
+
 });
 
 
