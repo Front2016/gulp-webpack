@@ -12,6 +12,7 @@ var rename = require('gulp-rename');
 
 //终端输出标记
 var chalk = require('chalk');
+var notify = require('gulp-notify');
 
 gulp.task('default', function(){
 	// 将你的默认的任务代码放在这
@@ -28,10 +29,18 @@ gulp.task('compile', function() {
 	})).pipe(gulp.dest('./dest'))
 
 	gulp.src('./src/css/*.scss',{base : 'src'})
+	//编译scss
 	.pipe(sass())
+	// 保存一份编译完的
+	// 。pipe(gulp.dest('./dest'))
+	//压缩样式文件
 	.pipe(minifycss())
+	//给文件添加.min后缀
 	.pipe(rename({ suffix: '.min' }))
+	//输出压缩文件到指定目录
 	.pipe(gulp.dest('./dest'))
+	//提醒任务完成
+	.pipe(notify({message:'css 编译压缩结束'}))
 
 });
 
