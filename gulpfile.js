@@ -4,10 +4,12 @@ var gulp = require('gulp');
 //文件监控
 var watch = require('gulp-watch');
 
-
 //jade和scss编译
 var jade = require('gulp-jade');
 var sass = require('gulp-sass');
+
+//该插件能够实现 只编译或打包改变过文件 ，大大加快了gulp task的执行速度。比如只操作发生过改变的文件。
+var changed = require('gulp-changed');
 
 //压缩css
 var minifycss = require('gulp-minify-css');
@@ -42,7 +44,10 @@ var autoprefixer = require('gulp-autoprefixer');
 
 //终端输出标记
 var chalk = require('chalk');
+//notify的功能主要有两点，显示报错信息和报错后不终止当前gulp任务
 var notify = require('gulp-notify');
+//debug调试，查看stream流
+var debug = require('gulp-debug');
 
 //浏览器服务,BrowserSync可以同时同步刷新多个浏览器，
 //更神奇的是你在一个浏览器中滚动页面、点击按钮、输入框中输入信息等用户行为也会同步到每个浏览器中。
@@ -58,13 +63,14 @@ var del = require('del');
 //问题：如何结合chmod使用
 
 
-
-
 /******************************* 以上是模块导入 *****************************************/
 
 //默认任务
 gulp.task('default', function(){
 	// 将你的默认的任务代码放在这
+  return gulp.src('./dest/index.min.js')
+          .pipe(debug({title: 'unicorn:'}))
+          .pipe(gulp.dest('./dest'));
 	console.log('=====开始默认初始化=====');
 });
 
@@ -131,13 +137,13 @@ gulp.task('push', function(){
 	gulp.src('./dest/css/*.{css}')
 		//对backgound／background-image生成雪碧图
 		.pipe(spriter({
-            // 生成的spriter的位置
-            'spriteSheet': './dest/img/sprite/sprite'+timestamp+'.png',
-            // 生成样式文件图片引用地址的路径
-            // 如下将生产：backgound:url(../images/sprite20324232.png)
-            'pathToSpriteSheetFromCSS': '../img/sprite/sprite'+timestamp+'.png'
-        }))
-        //压缩样式文件
+        // 生成的spriter的位置
+        'spriteSheet': './dest/img/sprite/sprite'+timestamp+'.png',
+        // 生成样式文件图片引用地址的路径
+        // 如下将生产：backgound:url(../images/sprite20324232.png)
+        'pathToSpriteSheetFromCSS': '../img/sprite/sprite'+timestamp+'.png'
+    }))
+    //压缩样式文件
 		.pipe(minifycss())
 		//给文件添加.min后缀
 		.pipe(rename({ suffix: '.min' }))
@@ -177,7 +183,9 @@ gulp.task('push', function(){
 
 	//压缩js
 	gulp.src('./src/*.js')
-		.pipe(uglify({
+      //只把修改过的已js结尾的文件进行编译
+      .pipe(changed('./dest/*.{js}'))
+		  .pipe(uglify({
 	        mangle: true,//类型：Boolean 默认：true 是否修改变量名
 	        compress: true,//排除混淆关键字,//类型：Boolean 默认：true 是否完全压缩
 	        preserveComments: 'all' //保留所有注释
