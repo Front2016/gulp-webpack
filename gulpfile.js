@@ -110,6 +110,10 @@ var size = require('gulp-filesize');
 // .pipe(gulp.dest('./dist/')
 // .pipe(size()) // [gulp] Size example.css: 265.32 kB 
 
+//统计文件的大小
+//Display the size and gzipped size of your project, trigger alarm when file size is higher as expected
+var sizereport = require('gulp-sizereport');
+
 //日志，文件名修改等
 var gutil = require('gulp-util');
 // gutil.log('stuff happened', 'Really it did', gutil.colors.magenta('123'));
@@ -270,6 +274,19 @@ gulp.task('push', function(){
   	    }))
   	    .pipe(rename({ suffix: '.min' }))
   	    .pipe(gulp.dest('./dest'))
+        .pipe(sizereport({
+            gzip: true,
+            // minifier: function (contents) {
+            //     return UglifyJS.minify(contents, { fromString: true }).code;
+            // },
+            // '*': {
+            //     'maxSize': 100000
+            // },
+            // 'pin.js': {
+            //     'maxMinifiedSize': 5500,
+            //     'maxMinifiedGzippedSize': 2500 
+            // }
+        }))
   	    .pipe(notify({message:'====压缩结束===='}))
 
     //压缩html
@@ -307,7 +324,7 @@ gulp.task('build',['default','dev:server','compile','push','watch'],function(){
 })
 
 //规定任务执行顺序
-gulp.task('sequence', gulpSequence(['a', 'b'], 'compile','push'));
+gulp.task('sequence', sequence(['a', 'b'], 'compile','push'));
 
 
 
