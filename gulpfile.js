@@ -14,10 +14,34 @@ var rename = require('gulp-rename');
 var chalk = require('chalk');
 var notify = require('gulp-notify');
 
+
+var browserSync = require('browser-sync');
+var bs = browserSync.create('My server');
+
 gulp.task('default', function(){
 	// 将你的默认的任务代码放在这
 	console.log('开始默认初始化');
 	chalk.yellow('start server');
+});
+
+// dev server
+// 启动 express 并添加 browserSync 支持
+gulp.task('dev:server', function () {
+  // 启动node
+  // nodemon({
+  //   script: 'server.js',
+  //   ignore: ['.vscode', '.idea', 'node_modules'],
+  //   env: {
+  //     'NODE_ENV': 'development'
+  //   }
+  // });
+  bs.init(null, {
+    proxy: 'http://localhost:' + 3000,
+    files: ['./src/page/*.jade'],
+    notify: false,
+    open: true,
+    port: 5000
+  })
 });
 
 
@@ -45,6 +69,6 @@ gulp.task('compile', function() {
 });
 
 
-gulp.task('build',['default','compile'],function(){
+gulp.task('build',['default','dev:server','compile'],function(){
 	console.log('结束任务');
 })
