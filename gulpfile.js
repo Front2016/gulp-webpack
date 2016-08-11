@@ -1,6 +1,19 @@
 var gulp = require('gulp');
 // var minify = require('minify');
 
+//在这主要用来渲染模板
+var express = require('express');
+//实例化express对象
+var app = express();
+//express指定静态文件目录
+app.use('/static', express.static('./dest'));
+// app.use(express.static('public'));
+// app.use(express.static('files'));
+
+
+//开发环境区分
+var env = process.env.NODE_ENV || 'development';
+
 //文件监控
 var watch = require('gulp-watch');
 
@@ -42,6 +55,20 @@ var htmlmin = require('gulp-htmlmin');
 //gulp.src('src/*.html')
 // .pipe(htmlmin({collapseWhitespace: true}))
 // .pipe(gulp.dest('dist'))
+
+//压缩svg
+var svgstore = require('gulp-svgstore');
+// gulp.task('default', function () {
+//     return gulp
+//         .src('src/svg/**/*.svg', { base: 'src/svg' })
+//         .pipe(rename({prefix: 'icon-'}))
+//         .pipe(svgstore())
+//         .pipe(gulp.dest('dest'));
+// });
+
+//把字体文件生成icon
+var iconfont = require('gulp-iconfont');
+var runTimestamp = Math.round(Date.now()/1000);
 
 //添加浏览器前缀,来自动兼容不同的浏览器，不如css3里边不同浏览器的差异。ex:transition
 //-webkit-transition:
@@ -137,6 +164,50 @@ var gp_deploy = require('gulp-gh-pages');
 //         .pipe(gp_deploy(options));
 // });
 
+//给文件添加hash前缀，生成静态文件map，防止缓存
+var rev = require('gulp-rev');
+// .pipe(gulp.dest('build/assets'))  // copy original assets to build dir 
+// .pipe(rev())
+// .pipe(gulp.dest('build/assets'))  // write rev'd assets to build dir 
+// .pipe(rev.manifest())
+// .pipe(gulp.dest('build/assets')); // write manifest to build dir 
+
+// 生成map文件
+var revNapkin = require('gulp-rev-napkin');
+// .pipe(rev())
+// .pipe(gulp.dest('dest/'))
+// .pipe(revNapkin()); // Just place after gulp-rev(-all) 
+
+//替换文件用的，把html中的静态文件替换成map中的
+var revReplace = require('gulp-rev-replace');
+// gulp.task("revision", ["dist:css", "dist:js"], function(){
+//   return gulp.src(["dist/**/*.css", "dist/**/*.js"])
+//     .pipe(rev())
+//     .pipe(gulp.dest(opt.distFolder))
+//     .pipe(rev.manifest())
+//     .pipe(gulp.dest(opt.distFolder))
+// })
+ 
+// gulp.task("revreplace", ["revision"], function(){
+//   var manifest = gulp.src("./" + opt.distFolder + "/rev-manifest.json");
+ 
+//   return gulp.src(opt.srcFolder + "/index.html")
+//     .pipe(revReplace({manifest: manifest}))
+//     .pipe(gulp.dest(opt.distFolder));
+// });
+
+
+
+
+
+// 不知道干嘛的
+var sourcemaps = require('gulp-sourcemaps');
+
+
+
+
+
+
 /******************************* 以上是模块导入 *****************************************/
 
 //默认任务
@@ -166,11 +237,17 @@ gulp.task('dev:server', function () {
   	//目的是启动一个端口来见负责检测改变刷新页面，页页面展示无关，所以端口要和web端口分开，
   	//files就是要检测的文件，重新刷新文件
     proxy: 'http://localhost:' + 5000,
+    baseDir: "./dest",
     files: ['./dest/*.html'],
     notify: false,
     open: true,
     port: 3000
   })
+  app.get('/', function (req, res) {
+    res.send('Hello World')
+  })
+   
+  app.listen(3000)
 });
 
 
@@ -178,6 +255,8 @@ gulp.task('dev:server', function () {
 gulp.task('compile', function() {
   // jade和scss编译
 	gulp.src('./src/page/*.jade')
+    //sourcemaps初始化
+    .pipe(sourcemaps.init({loadMaps: true}))
     //给jade提供数据
     .pipe(data(function(file,callback) {
       // return require('./examples/' + path.basename(file.path) + '.json');
@@ -186,6 +265,8 @@ gulp.task('compile', function() {
   	.pipe(jade({
   	  pretty: true //pretty也就是漂亮的格式化的
   	}))
+    //这是干嘛的？
+    .pipe(sourcemaps.write('../maps'))
     .pipe(gulp.dest('./dest'))
 
 	gulp.src('./src/css/*.scss',{base : 'src'})
@@ -208,13 +289,30 @@ gulp.task('compile', function() {
   	.pipe(notify({message:'====编译结束===='}))
 });
 
+//生成字体文件任务
+gulp.task('Iconfont', function(){
+  return gulp.src(['assets/icons/*.svg'])
+    .pipe(iconfont({
+      fontName: 'myfont', // required 
+      prependUnicode: true, // recommended option 
+      formats: ['ttf', 'eot', 'woff'], // default, 'woff2' and 'svg' are available 
+      timestamp: runTimestamp, // recommended to get consistent builds when watching files 
+    }))
+      .on('glyphs', function(glyphs, options) {
+        // CSS templating, e.g. 
+        console.log(glyphs, options);
+      })
+    .pipe(gulp.dest('www/fonts/'));
+});
+
 
 //压缩js和css任务
 gulp.task('push', function(){
 	//图片压缩问题：大小没变，压缩的条件是什么？
 	//压缩css
 	var timestamp = +new Date();
-	gulp.src('./dest/css/*.{css}')
+  del('./dest/img/sprite/*')
+	gulp.src('./dest/css/*.css')
 		//对backgound／background-image生成雪碧图
 		.pipe(spriter({
         // 生成的spriter的位置
@@ -227,9 +325,12 @@ gulp.task('push', function(){
 		.pipe(minifycss())
 		//给文件添加.min后缀
 		.pipe(rename({ suffix: '.min' }))
+    .pipe(rev())
+    .pipe(gulp.dest('./dest/css/assets'))
+    .pipe(rev.manifest())
     .pipe(chmod(755))
-		.pipe(gulp.dest('./dest/css'))
-    .pipe(size()) //我怎么没看到效果
+		.pipe(gulp.dest('./'))
+    //.pipe(size()) //我怎么没看到效果
 
 	//压缩图片
 	// gulp.src('./src/img/*.{png,jpg,gif,ico,jpeg}')
