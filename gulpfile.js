@@ -10,6 +10,10 @@ app.use('/static', express.static('./dest'));
 // app.use(express.static('public'));
 // app.use(express.static('files'));
 
+//响应压缩
+var compression = require('compression')
+app.use(compression())
+
 
 //开发环境区分
 var env = process.env.NODE_ENV || 'development';
@@ -203,8 +207,10 @@ var revReplace = require('gulp-rev-replace');
 // 不知道干嘛的
 var sourcemaps = require('gulp-sourcemaps');
 
-
-
+//获取文件资源
+var open = require("open");
+// open("http://www.google.com");
+// open("http://www.google.com", "firefox");
 
 
 
