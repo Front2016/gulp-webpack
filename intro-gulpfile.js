@@ -15,8 +15,8 @@ var webpack = require('webpack');
 var webpackConfig = require("./webpack.config.js");
 
 //响应压缩
-var compression = require('compression')
-app.use(compression())
+var compression = require('compression');
+app.use(compression());
 
 
 //开发环境区分
@@ -468,7 +468,7 @@ gulp.task('push', function(){
         .pipe(htmlmin({collapseWhitespace: true}))
         .pipe(gulp.dest('./dest'))
 
-})
+});
 
 gulp.task('webpack', function(){
   var myConfig = Object.create(webpackConfig);
