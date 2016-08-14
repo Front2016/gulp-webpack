@@ -10,6 +10,10 @@ app.use('/static', express.static('./dest'));
 // app.use(express.static('public'));
 // app.use(express.static('files'));
 
+//模块化js编译 es6
+var webpack = require('webpack');
+var webpackConfig = require("./webpack.config.js");
+
 //响应压缩
 var compression = require('compression')
 app.use(compression())
@@ -85,6 +89,20 @@ var chalk = require('chalk');
 var notify = require('gulp-notify');
 //debug调试，查看stream流
 var debug = require('gulp-debug');
+//打印日志到终端
+var morgan = require('morgan');
+// var logger = morgan('combined')
+// http.createServer(function (req, res) {
+//   var done = finalhandler(req, res)
+//   logger(req, res, function (err) {
+//     if (err) return done(err)
+ 
+//     // respond to request 
+//     res.setHeader('content-type', 'text/plain')
+//     res.end('hello, world!')
+//   })
+// })
+
 
 //浏览器服务,BrowserSync可以同时同步刷新多个浏览器，
 //更神奇的是你在一个浏览器中滚动页面、点击按钮、输入框中输入信息等用户行为也会同步到每个浏览器中。
@@ -214,6 +232,55 @@ var open = require("open");
 
 
 
+//生成json
+var objectAssign = require('object-assign');
+// ignores null and undefined sources 
+//objectAssign({foo: 0}, null, {bar: 1}, undefined);
+//=> {foo: 0, bar: 1} 
+
+
+// var stream1 = new Stream();
+// var stream2 = new Stream();
+// var merged = mergeStream(stream1, stream2);
+// var stream3 = new Stream();
+// merged.add(stream3);
+// merged.isEmpty();
+
+
+//时间统计
+var prettyHrtime = require('pretty-hrtime');
+// var start = process.hrtime();
+// do stuff 
+// var end = process.hrtime(start);
+// var words = prettyHrtime(end);
+// console.log(words); // '1.2 ms' 
+// words = prettyHrtime(end, {precise:true});
+// console.log(words); // '1.20958 ms' 
+
+
+
+//把不同的任务放在不同的文件中，指定文件目录即可
+var requireDir = require('require-dir');
+//找tasks文件夹中的文件
+// requireDir('./gulp/tasks');
+
+
+//添加node js方法拓展
+// Load the full build. 
+var _ = require('lodash');
+// Load the core build. 
+// var _ = require('lodash/core');
+// // Load the fp build for immutable auto-curried iteratee-first data-last methods. 
+// var fp = require('lodash/fp');
+// // Load a method category. 
+// var array = require('lodash/array');
+// var object = require('lodash/fp/object');
+// // Load a single method for smaller builds with browserify/rollup/webpack. 
+// var chunk = require('lodash/chunk');
+// var extend = require('lodash/fp/extend');
+
+/******************************* 以上是模块导入 *****************************************/
+/******************************* 以上是模块导入 *****************************************/
 /******************************* 以上是模块导入 *****************************************/
 
 //默认任务
@@ -229,6 +296,10 @@ gulp.task('default', function(){
 // dev server
 // 启动 express 并添加 browserSync 支持
 gulp.task('dev:server', function () {
+  app.get('/', function (req, res) {
+    res.send('Hello World')
+  })
+  app.listen(3000)
   // 启动node
   // nodemon({
   //   script: 'server.js',
@@ -249,11 +320,6 @@ gulp.task('dev:server', function () {
     open: true,
     port: 3000
   })
-  app.get('/', function (req, res) {
-    res.send('Hello World')
-  })
-   
-  app.listen(3000)
 });
 
 
@@ -404,6 +470,27 @@ gulp.task('push', function(){
 
 })
 
+gulp.task('webpack', function(){
+  var myConfig = Object.create(webpackConfig);
+  // run webpack
+  webpack(
+    // configuration
+    myConfig,
+    function (err, stats) {
+      var end = process.hrtime();
+      var words = prettyHrtime(end);
+      console.log(words); // '1.2 ms' 
+      words = prettyHrtime(end, {precise:true});
+      console.log(words); // '1.20958 ms' 
+
+      // if(err) throw new gutil.PluginError("webpack", err);
+      // gutil.log("[webpack]", stats.toString({
+      //   // output options
+      // }));
+      //callback();
+    });
+})
+
 
 /******************************* 以上是颗粒任务 *****************************************/
 
@@ -424,9 +511,10 @@ gulp.task('del', function(){
 	console.log('====文件删除完毕====');
 })
 
+
 /******************************* 以上是颗粒监听 *****************************************/
 
-gulp.task('build',['default','dev:server','compile','push','watch'],function(){
+gulp.task('build',['default','dev:server','compile','push','webpack','watch'],function(){
 	console.log('结束任务');
 })
 
